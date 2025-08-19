@@ -7,8 +7,9 @@
 }
 
 .weather-widget .weather-icon {
-    width: 27px;
-    height: 27px;
+    font-size: 27px;
+    line-height: 1;
+    color: inherit;
 }
 
 .weather-widget.unavailable {

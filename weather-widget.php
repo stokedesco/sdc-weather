@@ -7,19 +7,43 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Get the AccuWeather icon URL for a given icon code.
+ * Get markup for an icon matching the given AccuWeather code.
  *
  * @param int|string $code AccuWeather icon code.
- * @return string Icon URL.
+ * @return string Icon HTML.
  */
-function cww_get_accuweather_icon_url( $code ) {
-    if ( '' === $code ) {
-        return '';
-    }
+function cww_get_icon_markup( $code ) {
+    $map = array(
+        1  => 'fa-sun',
+        2  => 'fa-cloud-sun',
+        3  => 'fa-cloud-sun',
+        4  => 'fa-cloud-sun',
+        5  => 'fa-cloud-sun',
+        6  => 'fa-cloud-sun',
+        7  => 'fa-cloud',
+        8  => 'fa-cloud',
+        11 => 'fa-cloud',
+        12 => 'fa-cloud-rain',
+        13 => 'fa-cloud-rain',
+        14 => 'fa-cloud-showers-heavy',
+        15 => 'fa-cloud-showers-heavy',
+        16 => 'fa-cloud-bolt',
+        17 => 'fa-cloud-bolt',
+        18 => 'fa-cloud-rain',
+        19 => 'fa-snowflake',
+        20 => 'fa-snowflake',
+        21 => 'fa-snowflake',
+        22 => 'fa-snowflake',
+        23 => 'fa-snowflake',
+        24 => 'fa-snowflake',
+        25 => 'fa-snowflake',
+        26 => 'fa-snowflake',
+        29 => 'fa-wind',
+    );
 
-    $code = str_pad( absint( $code ), 2, '0', STR_PAD_LEFT );
+    $class = isset( $map[ absint( $code ) ] ) ? $map[ absint( $code ) ] : 'fa-cloud';
 
-    return sprintf( 'https://developer.accuweather.com/sites/default/files/%s-s.png', $code );
+    return '<i class="weather-icon fa-solid ' . esc_attr( $class ) . '"></i>';
 }
 
 /**
@@ -41,22 +65,16 @@ function cww_render_weather_widget() {
     $condition   = isset( $data['condition'] ) ? $data['condition'] : '';
     $icon_code   = isset( $data['icon'] ) ? $data['icon'] : '';
 
-    $threshold  = get_option( 'sdc_weather_temp_threshold', 0 );
+    $unit      = get_option( 'sdc_weather_temp_unit', 'celsius' );
+    $threshold = get_option( 'sdc_weather_temp_threshold', 0 );
     $is_warning = $temperature > $threshold;
-
-    if ( $is_warning ) {
-        $icon = plugin_dir_url( __FILE__ ) . 'warning.svg';
-    } else {
-        $icon = cww_get_accuweather_icon_url( $icon_code );
-    }
-
-    $classes = 'weather-widget' . ( $is_warning ? ' warning' : '' );
+    $icon       = $is_warning ? '<i class="weather-icon fa-solid fa-triangle-exclamation"></i>' : cww_get_icon_markup( $icon_code );
+    $classes    = 'weather-widget' . ( $is_warning ? ' warning' : '' );
+    $suffix     = ( 'fahrenheit' === $unit ) ? '&deg;F' : '&deg;C';
 
     $html  = '<div class="' . esc_attr( $classes ) . '">';
-    if ( ! empty( $icon ) ) {
-        $html .= '<img class="weather-icon" width="27" height="27" src="' . esc_url( $icon ) . '" alt="' . esc_attr( $condition ) . '" />';
-    }
-    $html .= '<span class="weather-text">' . esc_html( $condition ) . ' ' . esc_html( $temperature ) . '&deg;</span>';
+    $html .= $icon;
+    $html .= '<span class="weather-text">' . esc_html( $condition ) . ' ' . esc_html( $temperature ) . $suffix . '</span>';
     $html .= '</div>';
 
     return $html;

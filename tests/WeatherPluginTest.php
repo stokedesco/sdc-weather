@@ -14,9 +14,10 @@ class WeatherPluginTest extends TestCase {
     public function test_default_settings_registered() {
         sdc_weather_register_settings();
         global $registered_settings;
+        $this->assertSame('', $registered_settings['sdc_weather_api_key']['default']);
         $this->assertSame('', $registered_settings['sdc_weather_location']['default']);
         $this->assertSame(0, $registered_settings['sdc_weather_temp_threshold']['default']);
-        $this->assertSame('', $registered_settings['sdc_weather_api_key']['default']);
+        $this->assertSame('celsius', $registered_settings['sdc_weather_temp_unit']['default']);
     }
 
     public function test_api_response_is_cached() {
@@ -26,11 +27,14 @@ class WeatherPluginTest extends TestCase {
         $mock_body = json_encode(array(array(
             'WeatherText' => 'Sunny',
             'WeatherIcon' => 1,
-            'Temperature' => array('Imperial' => array('Value' => 75)),
+            'Temperature' => array(
+                'Metric' => array('Value' => 24),
+                'Imperial' => array('Value' => 75),
+            ),
         )));
 
         $first = fetch_current_weather();
-        $this->assertSame(array('condition' => 'Sunny', 'icon' => 1, 'temperature' => 75), $first);
+        $this->assertSame(array('condition' => 'Sunny', 'icon' => 1, 'temperature' => 24), $first);
         $this->assertSame(1, $wp_remote_get_calls);
 
         $second = fetch_current_weather();
@@ -46,14 +50,40 @@ class WeatherPluginTest extends TestCase {
         $mock_body = json_encode(array(array(
             'WeatherText' => 'Cloudy',
             'WeatherIcon' => 2,
-            'Temperature' => array('Imperial' => array('Value' => 65)),
+            'Temperature' => array(
+                'Metric' => array('Value' => 18),
+                'Imperial' => array('Value' => 65),
+            ),
         )));
 
         $html = cww_render_weather_widget();
         $this->assertStringContainsString('class="weather-widget"', $html);
-        $this->assertStringContainsString('Cloudy 65&deg;', $html);
+        $this->assertStringContainsString('Cloudy 18&deg;C', $html);
         $this->assertStringNotContainsString('style=', $html);
-        $this->assertStringContainsString('02-s.png', $html);
+        $this->assertStringContainsString('fa-cloud-sun', $html);
+    }
+
+    public function test_fetch_current_weather_respects_unit() {
+        global $wp_options, $mock_body, $wp_remote_get_calls;
+        $wp_options['sdc_weather_api_key'] = 'key';
+        $wp_options['sdc_weather_location'] = 'loc';
+        $mock_body = json_encode(array(array(
+            'WeatherText' => 'Breeze',
+            'WeatherIcon' => 3,
+            'Temperature' => array(
+                'Metric' => array('Value' => 10),
+                'Imperial' => array('Value' => 50),
+            ),
+        )));
+
+        $wp_options['sdc_weather_temp_unit'] = 'celsius';
+        $c = fetch_current_weather();
+        $this->assertSame(10, $c['temperature']);
+
+        $wp_options['sdc_weather_temp_unit'] = 'fahrenheit';
+        $f = fetch_current_weather();
+        $this->assertSame(50, $f['temperature']);
+        $this->assertGreaterThan(1, $wp_remote_get_calls); // called twice for different units
     }
 
     public function test_shortcode_fallback_output() {

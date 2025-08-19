@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: SDC Weather
+ * Plugin Name: Stoke Weather Widget
  * Description: Weather information plugin.
  * Version: 1.0.0
  * Author: SDC
@@ -22,5 +22,6 @@ add_action( 'wp_enqueue_scripts', 'sdc_weather_enqueue_assets' );
  * Enqueue assets for the weather widget.
  */
 function sdc_weather_enqueue_assets() {
+    wp_enqueue_style( 'sdc-weather-fontawesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css', array(), '6.5.1' );
     wp_enqueue_style( 'sdc-weather-widget', plugin_dir_url( __FILE__ ) . 'assets/css/widget.css', array(), '1.0.0' );
 }

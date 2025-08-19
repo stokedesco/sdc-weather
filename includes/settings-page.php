@@ -10,6 +10,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 function sdc_weather_register_settings() {
     register_setting(
         'sdc_weather',
+        'sdc_weather_api_key',
+        array(
+            'type'              => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'default'           => '',
+        )
+    );
+
+    register_setting(
+        'sdc_weather',
         'sdc_weather_location',
         array(
             'type'              => 'string',
@@ -30,19 +40,27 @@ function sdc_weather_register_settings() {
 
     register_setting(
         'sdc_weather',
-        'sdc_weather_api_key',
+        'sdc_weather_temp_unit',
         array(
             'type'              => 'string',
             'sanitize_callback' => 'sanitize_text_field',
-            'default'           => '',
+            'default'           => 'celsius',
         )
     );
 
     add_settings_section(
         'sdc_weather_section',
-        __( 'SDC Weather Settings', 'sdc-weather' ),
+        __( 'Stoke Weather Widget Settings', 'sdc-weather' ),
         '__return_false',
         'sdc_weather'
+    );
+
+    add_settings_field(
+        'sdc_weather_api_key',
+        __( 'API Key', 'sdc-weather' ),
+        'sdc_weather_api_key_field',
+        'sdc_weather',
+        'sdc_weather_section'
     );
 
     add_settings_field(
@@ -62,9 +80,9 @@ function sdc_weather_register_settings() {
     );
 
     add_settings_field(
-        'sdc_weather_api_key',
-        __( 'API Key', 'sdc-weather' ),
-        'sdc_weather_api_key_field',
+        'sdc_weather_temp_unit',
+        __( 'Temperature Unit', 'sdc-weather' ),
+        'sdc_weather_temp_unit_field',
         'sdc_weather',
         'sdc_weather_section'
     );
@@ -79,6 +97,7 @@ function sdc_weather_location_field() {
     echo '<input type="text" id="sdc-weather-location" name="sdc_weather_location" value="' . esc_attr( $value ) . '" class="regular-text" /> ';
     echo '<button type="button" class="button" id="sdc-weather-find-location">' . esc_html__( 'Find location', 'sdc-weather' ) . '</button>';
     echo '<div id="sdc-weather-location-results"></div>';
+    echo '<p class="description">' . esc_html__( 'Enter your AccuWeather Location ID, find your AccuWeather ID by', 'sdc-weather' ) . ' <a href="https://www.accuweather.com/en/search-locations" target="_blank">' . esc_html__( 'clicking here', 'sdc-weather' ) . '</a>.</p>';
 }
 
 /**
@@ -87,6 +106,7 @@ function sdc_weather_location_field() {
 function sdc_weather_temp_threshold_field() {
     $value = get_option( 'sdc_weather_temp_threshold', 0 );
     echo '<input type="number" name="sdc_weather_temp_threshold" value="' . esc_attr( $value ) . '" class="small-text" />';
+    echo '<p class="description">' . esc_html__( 'Enter the Temperature in which the warning sign displays instead.', 'sdc-weather' ) . '</p>';
 }
 
 /**
@@ -95,15 +115,27 @@ function sdc_weather_temp_threshold_field() {
 function sdc_weather_api_key_field() {
     $value = get_option( 'sdc_weather_api_key', '' );
     echo '<input type="text" name="sdc_weather_api_key" value="' . esc_attr( $value ) . '" class="regular-text" />';
+    echo '<p class="description">' . esc_html__( 'Enter your AccWeather API Key. If you do not have one, please register at', 'sdc-weather' ) . ' <a href="https://developer.accuweather.com/" target="_blank">https://developer.accuweather.com/</a></p>';
 }
 
 /**
- * Add the SDC Weather settings page under Settings.
+ * Output the temperature unit select field.
+ */
+function sdc_weather_temp_unit_field() {
+    $value = get_option( 'sdc_weather_temp_unit', 'celsius' );
+    echo '<select name="sdc_weather_temp_unit">';
+    echo '<option value="celsius"' . ( 'celsius' === $value ? ' selected' : '' ) . '>' . esc_html__( 'Celsius', 'sdc-weather' ) . '</option>';
+    echo '<option value="fahrenheit"' . ( 'fahrenheit' === $value ? ' selected' : '' ) . '>' . esc_html__( 'Fahrenheit', 'sdc-weather' ) . '</option>';
+    echo '</select>';
+}
+
+/**
+ * Add the Stoke Weather Widget settings page under Settings.
  */
 function sdc_weather_add_admin_menu() {
     add_options_page(
-        __( 'SDC Weather', 'sdc-weather' ),
-        __( 'SDC Weather', 'sdc-weather' ),
+        __( 'Stoke Weather Widget', 'sdc-weather' ),
+        __( 'Stoke Weather Widget', 'sdc-weather' ),
         'manage_options',
         'sdc_weather',
         'sdc_weather_settings_page'
@@ -117,7 +149,7 @@ add_action( 'admin_menu', 'sdc_weather_add_admin_menu' );
 function sdc_weather_settings_page() {
     ?>
     <div class="wrap">
-        <h1><?php esc_html_e( 'SDC Weather', 'sdc-weather' ); ?></h1>
+        <h1><?php esc_html_e( 'Stoke Weather Widget', 'sdc-weather' ); ?></h1>
         <?php
         if ( isset( $_GET['settings-updated'] ) ) {
             $location   = get_option( 'sdc_weather_location', '' );
@@ -129,13 +161,11 @@ function sdc_weather_settings_page() {
                 echo '<div class="notice notice-error"><p>' . esc_html__( 'Unable to connect to weather service. Please check your API key and location.', 'sdc-weather' ) . '</p></div>';
             } else {
                 echo '<div class="notice notice-success"><p>' . esc_html__( 'Connected to weather service.', 'sdc-weather' ) . '</p></div>';
-                $icon = cww_get_accuweather_icon_url( $connection['icon'] );
-                echo '<div class="weather-widget">';
-                if ( ! empty( $icon ) ) {
-                    echo '<img class="weather-icon" width="27" height="27" src="' . esc_url( $icon ) . '" alt="' . esc_attr( $connection['condition'] ) . '" /> ';
-                }
-                echo '<span class="weather-text">' . esc_html( $connection['condition'] ) . ' ' . esc_html( $connection['temperature'] ) . '&deg;</span>';
-                echo '</div>';
+                $threshold = get_option( 'sdc_weather_temp_threshold', 0 );
+                $unit      = get_option( 'sdc_weather_temp_unit', 'celsius' );
+                $icon      = ( $connection['temperature'] > $threshold ) ? '<i class="weather-icon fa-solid fa-triangle-exclamation"></i>' : cww_get_icon_markup( $connection['icon'] );
+                $suffix    = ( 'fahrenheit' === $unit ) ? '&deg;F' : '&deg;C';
+                echo '<div class="weather-widget">' . $icon . '<span class="weather-text">' . esc_html( $connection['condition'] ) . ' ' . esc_html( $connection['temperature'] ) . $suffix . '</span></div>';
             }
             echo '</div>';
         }

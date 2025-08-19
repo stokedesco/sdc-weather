@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <phpunit bootstrap="bootstrap.php">
     <testsuites>
-        <testsuite name="SDC Weather Tests">
+        <testsuite name="Stoke Weather Widget Tests">
             <directory suffix="Test.php">.</directory>
         </testsuite>
     </testsuites>

@@ -26,7 +26,8 @@ function fetch_current_weather( $location = '' ) {
         return array();
     }
 
-    $transient_key = 'sdc_weather_' . md5( $location );
+    $unit         = get_option( 'sdc_weather_temp_unit', 'celsius' );
+    $transient_key = 'sdc_weather_' . md5( $location . $unit );
     $cached = get_transient( $transient_key );
     if ( false !== $cached ) {
         return $cached;
@@ -54,10 +55,17 @@ function fetch_current_weather( $location = '' ) {
         return array();
     }
 
+    $temp = '';
+    if ( 'fahrenheit' === $unit && isset( $current['Temperature']['Imperial']['Value'] ) ) {
+        $temp = $current['Temperature']['Imperial']['Value'];
+    } elseif ( isset( $current['Temperature']['Metric']['Value'] ) ) {
+        $temp = $current['Temperature']['Metric']['Value'];
+    }
+
     $result = array(
         'condition'   => isset( $current['WeatherText'] ) ? $current['WeatherText'] : '',
         'icon'        => isset( $current['WeatherIcon'] ) ? $current['WeatherIcon'] : '',
-        'temperature' => isset( $current['Temperature']['Imperial']['Value'] ) ? $current['Temperature']['Imperial']['Value'] : '',
+        'temperature' => $temp,
     );
 
     set_transient( $transient_key, $result, HOUR_IN_SECONDS );
@@ -81,7 +89,8 @@ function sdc_weather_test_connection( $location, $api_key ) {
         return new WP_Error( 'missing_credentials', __( 'API key or location missing.', 'sdc-weather' ) );
     }
 
-    $transient_key = 'sdc_weather_test_' . md5( $location . $api_key );
+    $unit         = get_option( 'sdc_weather_temp_unit', 'celsius' );
+    $transient_key = 'sdc_weather_test_' . md5( $location . $api_key . $unit );
     $cached        = get_transient( $transient_key );
     if ( false !== $cached ) {
         return $cached;
@@ -114,10 +123,17 @@ function sdc_weather_test_connection( $location, $api_key ) {
         return $error;
     }
 
+    $temp = '';
+    if ( 'fahrenheit' === $unit && isset( $current['Temperature']['Imperial']['Value'] ) ) {
+        $temp = $current['Temperature']['Imperial']['Value'];
+    } elseif ( isset( $current['Temperature']['Metric']['Value'] ) ) {
+        $temp = $current['Temperature']['Metric']['Value'];
+    }
+
     $result = array(
         'condition'   => isset( $current['WeatherText'] ) ? $current['WeatherText'] : '',
         'icon'        => isset( $current['WeatherIcon'] ) ? $current['WeatherIcon'] : '',
-        'temperature' => isset( $current['Temperature']['Imperial']['Value'] ) ? $current['Temperature']['Imperial']['Value'] : '',
+        'temperature' => $temp,
     );
 
     set_transient( $transient_key, $result, defined( 'MINUTE_IN_SECONDS' ) ? 5 * MINUTE_IN_SECONDS : 300 );
