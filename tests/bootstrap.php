@@ -40,6 +40,7 @@ function sanitize_hex_color($value) { return $value; }
 function absint($value) { return (int) $value; }
 function esc_url_raw($value) { return $value; }
 function __($text) { return $text; }
+function esc_html__($text, $domain = '') { return $text; }
 
 // Escapers.
 function esc_attr($text) { return $text; }
