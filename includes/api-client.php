@@ -54,10 +54,17 @@ function fetch_current_weather( $location = '' ) {
         return array();
     }
 
+    $unit = get_option( 'sdc_weather_temp_unit', 'celsius' );
+    if ( 'fahrenheit' === $unit ) {
+        $temp = isset( $current['Temperature']['Imperial']['Value'] ) ? $current['Temperature']['Imperial']['Value'] : '';
+    } else {
+        $temp = isset( $current['Temperature']['Metric']['Value'] ) ? $current['Temperature']['Metric']['Value'] : '';
+    }
+
     $result = array(
         'condition'   => isset( $current['WeatherText'] ) ? $current['WeatherText'] : '',
         'icon'        => isset( $current['WeatherIcon'] ) ? $current['WeatherIcon'] : '',
-        'temperature' => isset( $current['Temperature']['Imperial']['Value'] ) ? $current['Temperature']['Imperial']['Value'] : '',
+        'temperature' => $temp,
     );
 
     set_transient( $transient_key, $result, HOUR_IN_SECONDS );
@@ -114,10 +121,17 @@ function sdc_weather_test_connection( $location, $api_key ) {
         return $error;
     }
 
+    $unit = get_option( 'sdc_weather_temp_unit', 'celsius' );
+    if ( 'fahrenheit' === $unit ) {
+        $temp = isset( $current['Temperature']['Imperial']['Value'] ) ? $current['Temperature']['Imperial']['Value'] : '';
+    } else {
+        $temp = isset( $current['Temperature']['Metric']['Value'] ) ? $current['Temperature']['Metric']['Value'] : '';
+    }
+
     $result = array(
         'condition'   => isset( $current['WeatherText'] ) ? $current['WeatherText'] : '',
         'icon'        => isset( $current['WeatherIcon'] ) ? $current['WeatherIcon'] : '',
-        'temperature' => isset( $current['Temperature']['Imperial']['Value'] ) ? $current['Temperature']['Imperial']['Value'] : '',
+        'temperature' => $temp,
     );
 
     set_transient( $transient_key, $result, defined( 'MINUTE_IN_SECONDS' ) ? 5 * MINUTE_IN_SECONDS : 300 );

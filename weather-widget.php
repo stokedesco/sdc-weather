@@ -56,7 +56,9 @@ function cww_render_weather_widget() {
     if ( ! empty( $icon ) ) {
         $html .= '<img class="weather-icon" width="27" height="27" src="' . esc_url( $icon ) . '" alt="' . esc_attr( $condition ) . '" />';
     }
-    $html .= '<span class="weather-text">' . esc_html( $condition ) . ' ' . esc_html( $temperature ) . '&deg;</span>';
+    $unit   = get_option( 'sdc_weather_temp_unit', 'celsius' );
+    $symbol = ( 'fahrenheit' === $unit ) ? 'F' : 'C';
+    $html .= '<span class="weather-text">' . esc_html( $condition ) . ' ' . esc_html( $temperature ) . '&deg;' . $symbol . '</span>';
     $html .= '</div>';
 
     return $html;

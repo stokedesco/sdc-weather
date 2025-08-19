@@ -20,6 +20,16 @@ function sdc_weather_register_settings() {
 
     register_setting(
         'sdc_weather',
+        'sdc_weather_temp_unit',
+        array(
+            'type'              => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'default'           => 'celsius',
+        )
+    );
+
+    register_setting(
+        'sdc_weather',
         'sdc_weather_temp_threshold',
         array(
             'type'              => 'integer',
@@ -54,6 +64,14 @@ function sdc_weather_register_settings() {
     );
 
     add_settings_field(
+        'sdc_weather_temp_unit',
+        __( 'Temperature Unit', 'sdc-weather' ),
+        'sdc_weather_temp_unit_field',
+        'sdc_weather',
+        'sdc_weather_section'
+    );
+
+    add_settings_field(
         'sdc_weather_temp_threshold',
         __( 'Temperature Threshold', 'sdc-weather' ),
         'sdc_weather_temp_threshold_field',
@@ -77,6 +95,17 @@ add_action( 'admin_init', 'sdc_weather_register_settings' );
 function sdc_weather_location_field() {
     $value = get_option( 'sdc_weather_location', '' );
     echo '<input type="text" name="sdc_weather_location" value="' . esc_attr( $value ) . '" class="regular-text" />';
+}
+
+/**
+ * Output the temperature unit select field.
+ */
+function sdc_weather_temp_unit_field() {
+    $value = get_option( 'sdc_weather_temp_unit', 'celsius' );
+    echo '<select name="sdc_weather_temp_unit">';
+    echo '<option value="celsius"' . ( 'celsius' === $value ? ' selected="selected"' : '' ) . '>Celsius</option>';
+    echo '<option value="fahrenheit"' . ( 'fahrenheit' === $value ? ' selected="selected"' : '' ) . '>Fahrenheit</option>';
+    echo '</select>';
 }
 
 /**
@@ -132,7 +161,9 @@ function sdc_weather_settings_page() {
                 if ( ! empty( $icon ) ) {
                     echo '<img class="weather-icon" width="27" height="27" src="' . esc_url( $icon ) . '" alt="' . esc_attr( $connection['condition'] ) . '" /> ';
                 }
-                echo '<span class="weather-text">' . esc_html( $connection['condition'] ) . ' ' . esc_html( $connection['temperature'] ) . '&deg;</span>';
+                $unit   = get_option( 'sdc_weather_temp_unit', 'celsius' );
+                $symbol = ( 'fahrenheit' === $unit ) ? '&deg;F' : '&deg;C';
+                echo '<span class="weather-text">' . esc_html( $connection['condition'] ) . ' ' . esc_html( $connection['temperature'] ) . $symbol . '</span>';
                 echo '</div>';
             }
             echo '</div>';
