@@ -1,10 +1,6 @@
 <?php
-/**
- * Plugin Name: Custom Weather Widget
- * Description: Displays current weather information via shortcode.
- * Version: 1.0.0
- * Author: OpenAI Assistant
- */
+
+// Weather widget shortcode and related functions.
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
