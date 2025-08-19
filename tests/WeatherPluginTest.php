@@ -14,9 +14,9 @@ class WeatherPluginTest extends TestCase {
     public function test_default_settings_registered() {
         sdc_weather_register_settings();
         global $registered_settings;
-        $this->assertSame('#000000', $registered_settings['sdc_weather_color']['default']);
+        $this->assertSame('', $registered_settings['sdc_weather_location']['default']);
         $this->assertSame(0, $registered_settings['sdc_weather_temp_threshold']['default']);
-        $this->assertSame('Proxima Nova', $registered_settings['sdc_weather_font_family']['default']);
+        $this->assertSame('', $registered_settings['sdc_weather_api_key']['default']);
     }
 
     public function test_api_response_is_cached() {
@@ -42,7 +42,6 @@ class WeatherPluginTest extends TestCase {
         global $wp_options, $mock_body;
         $wp_options['sdc_weather_api_key'] = 'key';
         $wp_options['sdc_weather_location'] = 'loc';
-        $wp_options['sdc_weather_color'] = '#00ff00';
         $wp_options['sdc_weather_temp_threshold'] = 70;
         $mock_body = json_encode(array(array(
             'WeatherText' => 'Cloudy',
@@ -53,7 +52,16 @@ class WeatherPluginTest extends TestCase {
         $html = cww_render_weather_widget();
         $this->assertStringContainsString('class="weather-widget"', $html);
         $this->assertStringContainsString('Cloudy 65&deg;', $html);
-        $this->assertStringContainsString('color:#00ff00', $html);
+        $this->assertStringNotContainsString('style=', $html);
         $this->assertStringContainsString('02-s.png', $html);
+    }
+
+    public function test_shortcode_fallback_output() {
+        global $wp_options;
+        $wp_options['sdc_weather_api_key'] = '';
+        $wp_options['sdc_weather_location'] = '';
+        $html = cww_render_weather_widget();
+        $this->assertStringContainsString('weather-widget unavailable', $html);
+        $this->assertStringContainsString('Weather data unavailable', $html);
     }
 }
