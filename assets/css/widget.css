@@ -1,1 +1,21 @@
 /* Typography styles for weather widget */
+:root {
+    --sdc-weather-color: #000;
+    --sdc-weather-warning-color: #ff0000;
+}
+
+.weather-widget {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--sdc-weather-color);
+}
+
+.weather-widget .weather-icon {
+    width: 27px;
+    height: 27px;
+}
+
+.weather-widget.warning {
+    color: var(--sdc-weather-warning-color);
+}
