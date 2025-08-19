@@ -11,8 +11,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-// Load settings.
+// Load settings and API client.
 require_once plugin_dir_path( __FILE__ ) . 'includes/settings-page.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/api-client.php';
 
 add_action( 'wp_enqueue_scripts', 'sdc_weather_enqueue_typography' );
 
