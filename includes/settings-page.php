@@ -5,6 +5,52 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Sanitize attachment ID ensuring it is a valid font file.
+ *
+ * @param int $attachment_id Attachment ID.
+ * @return int Sanitized attachment ID or 0 on failure.
+ */
+function sdc_weather_sanitize_font_attachment( $attachment_id ) {
+    $attachment_id = absint( $attachment_id );
+    if ( ! $attachment_id ) {
+        return 0;
+    }
+
+    $mime    = get_post_mime_type( $attachment_id );
+    $allowed = array(
+        'font/ttf',
+        'font/otf',
+        'font/woff',
+        'font/woff2',
+        'application/font-woff',
+        'application/font-woff2',
+        'application/x-font-ttf',
+        'application/vnd.ms-fontobject',
+    );
+
+    return in_array( $mime, $allowed, true ) ? $attachment_id : 0;
+}
+
+/**
+ * Enqueue media scripts for the settings page.
+ */
+function sdc_weather_admin_enqueue( $hook ) {
+    if ( 'settings_page_sdc_weather' !== $hook ) {
+        return;
+    }
+
+    wp_enqueue_media();
+    wp_enqueue_script(
+        'sdc-weather-font-upload',
+        plugins_url( '../assets/js/font-upload.js', __FILE__ ),
+        array( 'jquery' ),
+        '1.0.0',
+        true
+    );
+}
+add_action( 'admin_enqueue_scripts', 'sdc_weather_admin_enqueue' );
+
+/**
  * Register plugin settings, section, and fields.
  */
 function sdc_weather_register_settings() {
@@ -82,9 +128,9 @@ function sdc_weather_register_settings() {
         'sdc_weather',
         'sdc_weather_uploaded_font',
         array(
-            'type'              => 'string',
-            'sanitize_callback' => 'esc_url_raw',
-            'default'           => '',
+            'type'              => 'integer',
+            'sanitize_callback' => 'sdc_weather_sanitize_font_attachment',
+            'default'           => 0,
         )
     );
 
@@ -180,7 +226,7 @@ function sdc_weather_register_settings() {
 
     add_settings_field(
         'sdc_weather_uploaded_font',
-        __( 'Uploaded Font URL', 'sdc-weather' ),
+        __( 'Uploaded Font', 'sdc-weather' ),
         'sdc_weather_uploaded_font_field',
         'sdc_weather',
         'sdc_weather_typography'
@@ -275,11 +321,16 @@ function sdc_weather_adobe_kit_field() {
 }
 
 /**
- * Output the uploaded font URL field.
+ * Output the uploaded font field with media uploader.
  */
 function sdc_weather_uploaded_font_field() {
-    $value = get_option( 'sdc_weather_uploaded_font', '' );
-    echo '<input type="text" name="sdc_weather_uploaded_font" value="' . esc_attr( $value ) . '" class="regular-text" />';
+    $value      = get_option( 'sdc_weather_uploaded_font', 0 );
+    $attachment = $value ? get_post( $value ) : null;
+    $filename   = $attachment ? $attachment->post_title : '';
+
+    echo '<input type="hidden" id="sdc_weather_uploaded_font" name="sdc_weather_uploaded_font" value="' . esc_attr( $value ) . '" />';
+    echo '<button type="button" class="button" id="sdc_weather_uploaded_font_button">' . esc_html__( 'Select Font', 'sdc-weather' ) . '</button> ';
+    echo '<span id="sdc_weather_uploaded_font_filename">' . esc_html( $filename ) . '</span>';
 }
 
 /**
